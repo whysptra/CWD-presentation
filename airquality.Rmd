@@ -1,0 +1,129 @@
+---
+title: "Untitled"
+author: "Putu Wahyu Saputra"
+date: "10/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(leaflet)
+```
+
+```{r, warning=FALSE, message=FALSE}
+sensor_location <- read_csv("Microclimate_Sensor_Locations.csv")
+sensor_readings <- read_csv("Microclimate_Sensor_Readings.csv")
+```
+
+```{r}
+sensor_readings <- sensor_readings %>% 
+  mutate(local_time = ymd_hms(local_time))
+sensor_location <- sensor_location %>% 
+  mutate(last_data = ymd_hms(last_data))
+min(sensor_readings$local_time)
+```
+
+
+
+```{r}
+sensor_melb <- sensor_readings %>% 
+  left_join(sensor_location, by=c("site_id"="site_id"))
+
+air_quality <- sensor_melb %>%
+  filter(sensor_id %in% c("0a.EPA-1h","0b.EPA-1h")) %>%
+  mutate(condition= case_when(type=="PM10-EPA-1h" & value < 40 ~ "Good",
+                              type=="PM10-EPA-1h" & between(value, 40,80) ~ "Moderate",
+                              type=="PM10-EPA-1h" & between(value, 80,120) ~ "Poor",
+                              type=="PM10-EPA-1h" & between(value, 120,240) ~ "Very Poor",
+                              type=="PM10-EPA-1h" & value >= 120 ~ "Hazardous",
+                              type=="PM2.5-EPA-1h" & value< 27 ~ "Good",
+                              type=="PM2.5-EPA-1h" & between(value, 27,62) ~ "Moderate",
+                              type=="PM2.5-EPA-1h" & between(value, 62,97) ~ "Poor",
+                              type=="PM2.5-EPA-1h" & between(value, 97,370) ~ "Very Poor",
+                              type=="PM2.5-EPA-1h" & value >= 370 ~ "Hazardous"),
+         date = as_date(local_time),
+         day = mday(local_time),
+         time = hour(local_time),
+         month = month(local_time))
+```
+
+```{r function-plot}
+MyPalette <- c("#5DD0B9","#E1E7E9", "#1f78b4", "#a6cee3", "#f86cc5")
+names(MyPalette) <- levels(unique(air_quality$condition))
+
+plot_air_post_lockdown <- function(df, type_epa, date_measure){
+    df %>%
+    filter(type == type_epa,
+           local_time > date_measure) %>%
+    ggplot(aes(x=time, y=value, color=condition, group=date))+
+    geom_line()+
+    # geom_col(position="dodge", width = 0.5) +
+    facet_grid(description ~ .,
+    labeller = labeller(description = label_wrap_gen(10))) +
+    labs(x = "Date Time")+
+    theme(legend.position = "bottom")+
+    scale_fill_manual(values = MyPalette) +
+  scale_color_brewer(palette = "Dark2")+
+    theme_bw()
+}
+
+plot_air_pre_lockdown <- function(df, type_epa, date_measure){
+    df %>%
+    filter(type == type_epa,
+           local_time < date_measure) %>%
+    ggplot(aes(x=time, y=value, color=condition, group=date))+
+    geom_line()+
+    # geom_col(position="dodge", width = 0.5) +
+    facet_grid(description ~ .,
+    labeller = labeller(description = label_wrap_gen(10))) +
+    labs(x = "Date Time")+
+    theme(legend.position = "bottom")+
+    scale_fill_manual(values = MyPalette) +
+  scale_color_brewer(palette = "Dark2")+
+    theme_bw()
+}
+```
+
+```{r}
+plot_air_post_lockdown(air_quality, type_epa = "PM2.5-EPA-1h", date_measure = "2020-03-28 00:00:00")
+plot_air_post_lockdown(air_quality, type_epa = "PM10-EPA-1h", date_measure = "2020-03-28 00:00:00")
+plot_air_pre_lockdown(air_quality, type_epa = "PM2.5-EPA-1h", date_measure = "2020-03-28 00:00:00")
+plot_air_pre_lockdown(air_quality, type_epa = "PM10-EPA-1h", date_measure = "2020-03-28 00:00:00")
+```
+
+
+```{r air-per-sensor-post-lockdown-2.5}
+  air_quality %>%
+    filter(type == "PM2.5-EPA-1h",
+           local_time > "2020-03-28 00:00:00") %>%
+    ggplot(aes(x=time, y=value, color=condition, group=date))+
+    geom_line()+
+    # geom_col(position="dodge", width = 0.5) +
+    facet_grid(description ~ .,
+    labeller = labeller(description = label_wrap_gen(10))) +
+    labs(x = "Date Time")+
+    theme(legend.position = "bottom")+
+    scale_color_brewer(palette = "Dark2")+
+    theme_bw()
+```
+
+```{r air-per-sensor-pre-lockdown-2.5}
+  air_quality %>%
+    filter(type == "PM2.5-EPA-1h",
+           local_time < "2020-03-28 00:00:00") %>%
+    ggplot(aes(x=time, y=value, color=condition, group=date))+
+    geom_line()+
+    # geom_col(position="dodge", width = 0.5) +
+    facet_grid(description ~ .,
+    labeller = labeller(description = label_wrap_gen(10))) +
+    labs(x = "Date Time")+
+    theme(legend.position = "bottom")+
+    scale_color_brewer(palette = "Dark2")+
+    theme_bw()
+```
+
