@@ -69,13 +69,18 @@ code_condition <- function(data){
 
 air_quality <- air_quality %>%
   code_condition()
+
+timeline_tbl <- tibble(
+  event = c("Victoria's First Covid Case", "State of Emergency Declared", "Lockdown Reinstated", "State of Disaster Declared"),
+  date = c("2020-01-04", "2020-03-16", "2020-07-07", "2020-08-02")
+) %>%
+  mutate(date = as.factor(date))
 ```
 class: center
 
 # Victoria's First Covid Case
-
-
-```{r map1}
+.pull-left[
+```{r map1, fig.height=6}
 map_data <- air_quality %>%
   filter(type == "PM2.5-EPA-1h") %>%
   group_by(date, site_id, description, latitude, longitude, type) %>%
@@ -90,13 +95,13 @@ pal <- colorFactor(
 
 create_map <- function(data){
   data %>%
-    leaflet() %>%
+    leaflet(width = "90%") %>%
     addProviderTiles("CartoDB.DarkMatter") %>%
     addCircles(lng = ~longitude,
                       lat = ~latitude,
                       radius = ~value,
                       color = ~pal(condition),
-                      label = ~description) %>%
+                      popup = ~description) %>%
     addLegend("bottomright",
               pal = pal, 
               values = ~condition,
@@ -108,6 +113,49 @@ map_data %>%
   filter(date == "2020-01-04") %>%
   create_map()
 ```
+]
+
+.pull-right[
+```{r time1, fig.height=6, fig.width=5}
+create_timeline <- function(chosen_event){
+  selected <- timeline_tbl %>%
+  filter(event == chosen_event)
+
+timeline_tbl %>%
+  mutate(date = fct_rev(date))%>%
+  ggplot(aes(y = date, x = 0, label = event)) +
+  geom_vline(xintercept = 0,
+             color = "light blue",
+             size = 1.5) +
+  theme_classic() +
+  geom_segment(aes(x=2, xend = 0.01, yend = date), colour = "grey", size = 1) +
+  geom_point(aes(x=2, y = date), colour = "white", size = 5) +
+  geom_point(aes(x=2, y = date), colour = "dark grey", shape = 1, size = 5) +
+  geom_text(aes(y = date, 
+                x = 2.2, 
+                label = event,
+                hjust = 0),
+            colour = "dark grey",
+            size = 4) +
+  geom_text(data = selected, aes(y = date, 
+                x = 2.2, 
+                label = event,
+                hjust = 0),
+            size = 4) +
+  geom_text(aes(y = date,
+                x = -1,
+                label = date),
+                size = 5) +
+  theme(axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank()) +
+  xlim(-1.5,5)
+}
+
+create_timeline("Victoria's First Covid Case")
+```
+]
 
 ---
 class: center
@@ -138,3 +186,4 @@ map_data %>%
   filter(date == "2020-08-02") %>%
   create_map()
 ```
+
