@@ -70,6 +70,10 @@ code_condition <- function(data){
 air_quality <- air_quality %>%
   code_condition()
 ```
+class: center
+
+# Victoria's First Covid Case
+
 
 ```{r map1}
 map_data <- air_quality %>%
@@ -83,6 +87,7 @@ pal <- colorFactor(
   domain = map_data$condition
 )
 
+
 create_map <- function(data){
   data %>%
     leaflet() %>%
@@ -90,11 +95,46 @@ create_map <- function(data){
     addCircles(lng = ~longitude,
                       lat = ~latitude,
                       radius = ~value,
-                      color = ~pal(condition))
+                      color = ~pal(condition),
+                      label = ~description) %>%
+    addLegend("bottomright",
+              pal = pal, 
+              values = ~condition,
+              title = "Air Quality",
+              opacity = 1)
 }
 
 map_data %>%
-  filter(date == "2020-01-14") %>%
+  filter(date == "2020-01-04") %>%
   create_map()
 ```
 
+---
+class: center
+
+# A State of Emergency
+```{r map2}
+map_data %>%
+  filter(date == "2020-03-16") %>%
+  create_map()
+```
+
+---
+class: center
+
+# Back to Lockdown
+```{r map3}
+map_data %>%
+  filter(date == "2020-07-07") %>%
+  create_map()
+```
+
+---
+class: center
+
+# A State of Disaster
+```{r map4}
+map_data %>%
+  filter(date == "2020-08-02") %>%
+  create_map()
+```
