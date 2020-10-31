@@ -18,7 +18,8 @@ output:
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
 knitr::opts_chunk$set(echo = FALSE,
-                      message = FALSE)
+                      message = FALSE,
+                      fig.retina = 3)
 
 library(tidyverse)
 library(lubridate)
@@ -130,6 +131,7 @@ timeline_tbl %>%
   theme_classic() +
   geom_segment(aes(x=2, xend = 0.01, yend = date), colour = "grey", size = 1) +
   geom_point(aes(x=2, y = date), colour = "white", size = 5) +
+  geom_point(data = selected, aes(x=2, y = date), colour = "light blue", size = 5) +
   geom_point(aes(x=2, y = date), colour = "dark grey", shape = 1, size = 5) +
   geom_text(aes(y = date, 
                 x = 2.2, 
@@ -161,29 +163,52 @@ create_timeline("Victoria's First Covid Case")
 class: center
 
 # A State of Emergency
-```{r map2}
+.pull-left[
+```{r map2, fig.height=6}
 map_data %>%
   filter(date == "2020-03-16") %>%
   create_map()
 ```
+]
+
+.pull-right[
+
+```{r time2, fig.height=6, fig.width=5}
+create_timeline("State of Emergency Declared")
+```
+]
 
 ---
 class: center
 
 # Back to Lockdown
-```{r map3}
+.pull-left[
+```{r map3, fig.height=6}
 map_data %>%
   filter(date == "2020-07-07") %>%
   create_map()
 ```
+]
 
+.pull-right[
+```{r time3, fig.height=6, fig.width=5}
+create_timeline("Lockdown Reinstated")
+```
+]
 ---
 class: center
 
 # A State of Disaster
-```{r map4}
+.pull-left[
+```{r map4, fig.height=6}
 map_data %>%
   filter(date == "2020-08-02") %>%
   create_map()
 ```
+]
 
+.pull-right[
+```{r time4, fig.height=6, fig.width=5}
+create_timeline("State of Disaster Declared")
+```
+]
