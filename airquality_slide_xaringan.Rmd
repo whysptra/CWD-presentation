@@ -1,15 +1,15 @@
 ---
-title: "Presentation Ninja"
-subtitle: "&#x2694;&#xFE0F; xaringan +<br/>&#x1F60E; xaringanthemer"  
+title: "Air Quality in Melbourne"
+subtitle: "ETC5523 Presentation"  
 author: 
-  - "Yihui Xie"
-  - "Garrick Aden-Buie"
+  - "Lachlan Moody"
+  - "Putu Saputra"
 date: '`r Sys.Date()`'
 output:
   xaringan::moon_reader:
     lib_dir: libs
     seal: false 
-    css: xaringan-themer.css
+    css: [default, metropolis, metropolis-fonts]
     nature:
       highlightStyle: github
       highlightLines: true
@@ -30,6 +30,13 @@ library(plotly)
 library(ggridges)
 library(ggExtra)
 library(patchwork)
+library(scales)
+library(leaflet)
+
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      fig.retina = 3)
+
 style_duo_accent(
   primary_color = "#1381B0",
   secondary_color = "#FF961C",
@@ -77,7 +84,7 @@ names(MyPalette) <- unique(air_quality$condition)
 ```{r function-plot, warning=FALSE, message=FALSE, include=FALSE}
 # MyPalette <- c("#5DD0B9","#E1E7E9", "#1f78b4", "#a6cee3", "#f86cc5")
 
-library(scales)
+
 
 
 plot_air_post_lockdown <- function(df, type_epa, date_measure){
@@ -278,3 +285,223 @@ air_quality %>%
 ]
 
 ---
+class: center
+```{r data2}
+sensor_readings <- sensor_readings %>% 
+  mutate(local_time = ymd_hms(local_time))
+sensor_location <- sensor_location %>% 
+  mutate(last_data = ymd_hms(last_data))
+
+sensor_melb <- sensor_readings %>% 
+  left_join(sensor_location, by=c("site_id"="site_id"))
+
+air_quality <- sensor_melb %>%
+  filter(sensor_id %in% c("0a.EPA-1h","0b.EPA-1h")) %>%
+  mutate(date = as_date(local_time),
+         day = mday(local_time),
+         time = hour(local_time),
+         month = month(local_time))
+
+code_condition <- function(data){
+  data %>%
+    mutate(condition= case_when(type=="PM10-EPA-1h" & value < 40 ~ "Good",
+                              type=="PM10-EPA-1h" & between(value, 40,80) ~ "Moderate",
+                              type=="PM10-EPA-1h" & between(value, 80,120) ~ "Poor",
+                              type=="PM10-EPA-1h" & between(value, 120,240) ~ "Very Poor",
+                              type=="PM10-EPA-1h" & value >= 120 ~ "Hazardous",
+                              type=="PM2.5-EPA-1h" & value< 27 ~ "Good",
+                              type=="PM2.5-EPA-1h" & between(value, 27,62) ~ "Moderate",
+                              type=="PM2.5-EPA-1h" & between(value, 62,97) ~ "Poor",
+                              type=="PM2.5-EPA-1h" & between(value, 97,370) ~ "Very Poor",
+                              type=="PM2.5-EPA-1h" & value >= 370 ~ "Hazardous"))
+}
+
+air_quality <- air_quality %>%
+  code_condition()
+
+timeline_tbl <- tibble(
+  event = c("Victoria's First Covid Case", "State of Emergency Declared", "Lockdown Reinstated", "State of Disaster Declared"),
+  date = c("2020-01-04", "2020-03-16", "2020-07-07", "2020-08-02")
+) %>%
+  mutate(date = as.factor(date))
+```
+
+
+# Victoria's First Covid Case
+.pull-left[
+```{r map1, fig.height=6}
+map_data <- air_quality %>%
+  filter(type == "PM2.5-EPA-1h") %>%
+  group_by(date, site_id, description, latitude, longitude, type) %>%
+  summarise(value = mean(value)) %>%
+  code_condition()
+
+pal <- colorFactor(
+  palette = c("#5DD0B9","#E1E7E9", "#1f78b4", "#a6cee3", "#f86cc5"),
+  domain = map_data$condition
+)
+
+
+create_map <- function(data){
+  data %>%
+    leaflet(width = "90%") %>%
+    addProviderTiles("CartoDB.DarkMatter") %>%
+    addCircles(lng = ~longitude,
+                      lat = ~latitude,
+                      radius = ~value,
+                      color = ~pal(condition),
+                      popup = ~description) %>%
+    addLegend("bottomright",
+              pal = pal, 
+              values = ~condition,
+              title = "Air Quality",
+              opacity = 1)
+}
+
+map_data %>%
+  filter(date == "2020-01-04") %>%
+  create_map()
+```
+]
+
+.pull-right[
+```{r time1, fig.height=6, fig.width=5}
+create_timeline <- function(chosen_event){
+  selected <- timeline_tbl %>%
+  filter(event == chosen_event)
+
+timeline_tbl %>%
+  mutate(date = fct_rev(date))%>%
+  ggplot(aes(y = date, x = 0, label = event)) +
+  geom_vline(xintercept = 0,
+             color = "light blue",
+             size = 1.5) +
+  theme_classic() +
+  geom_segment(aes(x=2, xend = 0.01, yend = date), colour = "grey", size = 1) +
+  geom_point(aes(x=2, y = date), colour = "white", size = 5) +
+  geom_point(data = selected, aes(x=2, y = date), colour = "light blue", size = 5) +
+  geom_point(aes(x=2, y = date), colour = "dark grey", shape = 1, size = 5) +
+  geom_text(aes(y = date, 
+                x = 2.2, 
+                label = event,
+                hjust = 0),
+            colour = "dark grey",
+            size = 4) +
+  geom_text(data = selected, aes(y = date, 
+                x = 2.2, 
+                label = event,
+                hjust = 0),
+            size = 4) +
+  geom_text(aes(y = date,
+                x = -1,
+                label = date),
+                size = 5) +
+  theme(axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank()) +
+  xlim(-1.5,5)
+}
+
+create_timeline("Victoria's First Covid Case")
+```
+]
+
+---
+class: center
+
+# A State of Emergency
+.pull-left[
+```{r map2, fig.height=6}
+map_data %>%
+  filter(date == "2020-03-16") %>%
+  create_map()
+```
+]
+
+.pull-right[
+
+```{r time2, fig.height=6, fig.width=5}
+create_timeline("State of Emergency Declared")
+```
+]
+
+---
+class: center
+
+# Back to Lockdown
+.pull-left[
+```{r map3, fig.height=6}
+map_data %>%
+  filter(date == "2020-07-07") %>%
+  create_map()
+```
+]
+
+.pull-right[
+```{r time3, fig.height=6, fig.width=5}
+create_timeline("Lockdown Reinstated")
+```
+]
+---
+class: center
+
+# A State of Disaster
+.pull-left[
+```{r map4, fig.height=6}
+map_data %>%
+  filter(date == "2020-08-02") %>%
+  create_map()
+```
+]
+
+.pull-right[
+```{r time4, fig.height=6, fig.width=5}
+create_timeline("State of Disaster Declared")
+```
+]
+
+---
+class: center
+# Comparing Between Years
+.pull-left[
+#### November 2019
+
+<br>
+
+```{r map5, fig.height=6}
+map_data <- air_quality %>%
+  filter(type == "PM2.5-EPA-1h",
+         month == 11 | month == 10 ) %>%
+  group_by(month, site_id, description, latitude, longitude, type) %>%
+  summarise(value = mean(value)) %>%
+  code_condition()
+
+map_data %>%
+  filter(month == 11) %>%
+  create_map()
+```
+]
+
+.pull-right[
+#### October 2020
+
+<br>
+
+```{r map6, fig.height=6}
+map_data %>%
+  filter(month == 10) %>%
+  create_map()
+```
+]
+
+---
+class: inverse, center
+# Conclusion & Key Findings  
+
+<br>
+
+### 1: In general, Melbourne's air quality is quite good
+### 2: There does appear to be an increased number of days with poor air quality pre-lockdown
+### 3: However, when aggregated there appears to be little difference in air quality either side of the lockdown
+
