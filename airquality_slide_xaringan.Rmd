@@ -201,7 +201,7 @@ table %>% kable(escape = FALSE)
 .item[
 * Both of the plots are right skewed.
 * Before the lockdown distribution of air quality tends to have more bigger values
-* After lockdown have smaller.
+* After lockdown it has smaller values.
 ]
 ]
 
@@ -223,6 +223,7 @@ p3|p1 + plot_layout(guides="collect")
 .item[
 * Before the lockdown, the air quality looks bad with a lot of poor and hazardous categories
 * A lot of pollutant happen in early hour, it can be activity from the industry or vehicles
+* Also, Victoria recently suffered from the bush fire from the end of last year until the beginning of this year that affect the air quality
 * Air quality becomes much better after restriction occurs
 ]
 
@@ -237,6 +238,7 @@ p4|p2 + plot_layout(guides="collect")
 .item[
 * Before the lockdown, the air quality looks bad with a lot of poor and hazardous categories
 * A lot of pollutant happen in early hour, it can be activity from the industry or vehicles
+* Also, Victoria recently suffered from the bush fire from the end of last year until the beginning of this year that affect the air quality
 * Air quality becomes much better after restriction occurs
 ]
 
