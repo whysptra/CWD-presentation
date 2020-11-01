@@ -212,3 +212,35 @@ map_data %>%
 create_timeline("State of Disaster Declared")
 ```
 ]
+
+---
+class: center
+# Comparing Between Years
+.pull-left[
+#### November 2019
+```{r map5, fig.height=6}
+map_data <- air_quality %>%
+  filter(type == "PM2.5-EPA-1h",
+         month == 11 | month == 10 ) %>%
+  group_by(month, site_id, description, latitude, longitude, type) %>%
+  summarise(value = mean(value)) %>%
+  code_condition()
+
+map_data %>%
+  filter(month == 11) %>%
+  create_map()
+```
+]
+
+.pull-right[
+#### October 2020
+```{r map6, fig.height=6}
+map_data %>%
+  filter(month == 10) %>%
+  create_map()
+```
+]
+
+---
+class: center
+# Conclusion & Key Findings
