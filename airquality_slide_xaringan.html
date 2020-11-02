@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Air Quality in Melbourne</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Lachlan Moody" />
+    <meta name="author" content="Putu Saputra" />
+    <meta name="date" content="2020-11-03" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/metropolis.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/metropolis-fonts.css" rel="stylesheet" />
+    <script src="libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+    <script src="libs/jquery-1.12.4/jquery.min.js"></script>
+    <link href="libs/leaflet-1.3.1/leaflet.css" rel="stylesheet" />
+    <script src="libs/leaflet-1.3.1/leaflet.js"></script>
+    <link href="libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet" />
+    <script src="libs/Proj4Leaflet-1.0.1/proj4-compressed.js"></script>
+    <script src="libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
+    <link href="libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet" />
+    <script src="libs/leaflet-binding-2.0.3/leaflet.js"></script>
+    <script src="libs/leaflet-providers-1.9.0/leaflet-providers_1.9.0.js"></script>
+    <script src="libs/leaflet-providers-plugin-2.0.3/leaflet-providers-plugin.js"></script>
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+
+
+
+
+
+
+
+background-image: url(https://1v1d1e1lmiki1lgcvx32p49h8fe-wpengine.netdna-ssl.com/wp-content/uploads/2019/07/1561962307-Melbourne-Skyline.jpg)
+
+Image credit: [source](https://1v1d1e1lmiki1lgcvx32p49h8fe-wpengine.netdna-ssl.com/wp-content/uploads/2019/07/1561962307-Melbourne-Skyline.jpg)
+
+
+---
+class: center, middle
+
+# Air Quality in Melbourne
+
+## Team Nu
+### Lachlan Moody &amp; Putu Saputra
+
+---
+class: inverse, center, middle
+
+# How has the Melbourne lockdown(s) affected air pollution around the city?
+
+---
+
+# Dataset
+
+The climate sensor data from Melbourne City Council. This data set contains measurements obtained from November 2019 up until now, on things like humidity, temperature, and air quality from different locations around the city.
+
+--
+
+Based on air quality categories on [EPA AirWatch](https://www.epa.vic.gov.au/for-community/monitoring-your-environment/about-epa-airwatch/calculate-air-quality-categories) we took PM2.5 and PM10 as the pollutant with unit measurement of `\(µg/m^3\)`
+
+--
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Pollutant &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Measurement &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; &lt;span style="     color: #FFFFFF !important;border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #64A13C !important;" &gt;Good&lt;/span&gt; &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; &lt;span style="     color: #FFFFFF !important;border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #EAC51C !important;" &gt;Moderate&lt;/span&gt; &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; &lt;span style="     color: #FFFFFF !important;border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #D67900 !important;" &gt;Poor&lt;/span&gt; &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; &lt;span style="     color: #FFFFFF !important;border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #A90737 !important;" &gt;VeryPoor&lt;/span&gt; &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; &lt;span style="     color: #FFFFFF !important;border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #50051E !important;" &gt;Hazardous&lt;/span&gt; &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; PM10 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; µg/m^3 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; &lt; 40 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 40–80 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 80-120 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 120–240 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; &gt;= 240 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; PM2.5 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; µg/m^3 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; &lt; 27 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 27–62 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 62-97 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 97-370 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; &gt;= 370 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Air Pollution Distribution
+
+.pull-left[
+&lt;img src="airquality_slide_xaringan_files/figure-html/density-all-type-1.png" width="100%" /&gt;
+]
+
+.pull-right[
+.item[
+* Both of the plots are right skewed.
+* Before the lockdown distribution of air quality tends to have more bigger values
+* After lockdown it has smaller values.
+]
+]
+
+---
+
+# Hourly Plot based on PM2.5
+
+
+
+&lt;img src="airquality_slide_xaringan_files/figure-html/unnamed-chunk-2-1.png" width="720" /&gt;
+
+.item[
+* Before the lockdown, the air quality looks bad with a lot of poor and hazardous categories
+* A lot of pollutant happen in early hour, it can be activity from the industry or vehicles
+* Also, Victoria recently suffered from the bush fire from the end of last year until the beginning of this year that affect the air quality
+* Air quality becomes much better after restriction occurs
+]
+
+---
+
+# Hourly Plot based on PM10
+
+&lt;img src="airquality_slide_xaringan_files/figure-html/unnamed-chunk-3-1.png" width="720" /&gt;
+
+.item[
+* Before the lockdown, the air quality looks bad with a lot of poor and hazardous categories
+* A lot of pollutant happen in early hour, it can be activity from the industry or vehicles
+* Also, Victoria recently suffered from the bush fire from the end of last year until the beginning of this year that affect the air quality
+* Air quality becomes much better after restriction occurs
+]
+
+---
+# News Article (14 Jan 2020)
+
+![](pics.png)
+
+source : https://www.abc.net.au/news/2020-01-14/melbourne-air-quality-drops-to-hazardous-from-bushfire-smoke/11865178
+
+---
+
+# Air Quality Daily in 2020
+.pull-left[
+&lt;img src="airquality_slide_xaringan_files/figure-html/air-quality-daily-1.png" width="504" /&gt;
+]
+
+.pull-right[
+.item[
+* January has some days with bad air quality (bushfire effect)
+* February - October Melbourne mostly have good quality of air (restriction start at March 28th)
+]
+]
+
+---
+class: center
+
+
+
+# Victoria's First Covid Case
+.pull-left[
+<div id="htmlwidget-4bfe855d75a7b3c472d5" style="width:90%;height:432px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-4bfe855d75a7b3c472d5">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["CartoDB.DarkMatter",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircles","args":[[-37.800793,-37.800524,-37.8023,-37.800575,-37.800629],[144.966492,144.964122,144.960923,144.964635,144.965052],[42.3208333333333,41.8,38.7041666666667,40.4166666666667,36.2791666666667],null,null,{"interactive":true,"className":"","stroke":true,"color":["#1F78B4","#1F78B4","#1F78B4","#1F78B4","#1F78B4"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#1F78B4","#1F78B4","#1F78B4","#1F78B4","#1F78B4"],"fillOpacity":0.2},["Between 87 and 89 Grattan Street, Carlton","Corner of Swanston and Grattan Streets, Carlton","Corner of Pelham and Leicester Streets, Carlton","141 Grattan Street, Carlton","3/121 Grattan Street, Carlton"],null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null,null]},{"method":"addLegend","args":[{"colors":["#1F78B4"],"labels":["Moderate"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"factor","title":"Air Quality","extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[-37.8023,-37.800524],"lng":[144.960923,144.966492]}},"evals":[],"jsHooks":[]}</script>
+]
+
+.pull-right[
+&lt;img src="airquality_slide_xaringan_files/figure-html/time1-1.png" width="360" /&gt;
+]
+
+---
+class: center
+
+# A State of Emergency
+.pull-left[
+<div id="htmlwidget-327f0ab66fa9fe71775f" style="width:90%;height:432px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-327f0ab66fa9fe71775f">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["CartoDB.DarkMatter",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircles","args":[[-37.800793,-37.800524,-37.8023,-37.800575,-37.800629],[144.966492,144.964122,144.960923,144.964635,144.965052],[5.96363636363636,6.68260869565217,5.73478260869565,6.44782608695652,5.15454545454545],null,null,{"interactive":true,"className":"","stroke":true,"color":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"fillOpacity":0.2},["Between 87 and 89 Grattan Street, Carlton","Corner of Swanston and Grattan Streets, Carlton","Corner of Pelham and Leicester Streets, Carlton","141 Grattan Street, Carlton","3/121 Grattan Street, Carlton"],null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null,null]},{"method":"addLegend","args":[{"colors":["#5DD0B9"],"labels":["Good"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"factor","title":"Air Quality","extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[-37.8023,-37.800524],"lng":[144.960923,144.966492]}},"evals":[],"jsHooks":[]}</script>
+]
+
+.pull-right[
+
+&lt;img src="airquality_slide_xaringan_files/figure-html/time2-1.png" width="360" /&gt;
+]
+
+---
+class: center
+
+# Back to Lockdown
+.pull-left[
+<div id="htmlwidget-eaad9fec0dc3bf39b797" style="width:90%;height:432px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-eaad9fec0dc3bf39b797">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["CartoDB.DarkMatter",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircles","args":[[-37.800793,-37.800524,-37.8023,-37.800575,-37.800629],[144.966492,144.964122,144.960923,144.964635,144.965052],[9.75,11.0708333333333,9.72083333333333,11.6625,10.6291666666667],null,null,{"interactive":true,"className":"","stroke":true,"color":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"fillOpacity":0.2},["Between 87 and 89 Grattan Street, Carlton","Corner of Swanston and Grattan Streets, Carlton","Corner of Pelham and Leicester Streets, Carlton","141 Grattan Street, Carlton","3/121 Grattan Street, Carlton"],null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null,null]},{"method":"addLegend","args":[{"colors":["#5DD0B9"],"labels":["Good"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"factor","title":"Air Quality","extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[-37.8023,-37.800524],"lng":[144.960923,144.966492]}},"evals":[],"jsHooks":[]}</script>
+]
+
+.pull-right[
+&lt;img src="airquality_slide_xaringan_files/figure-html/time3-1.png" width="360" /&gt;
+]
+---
+class: center
+
+# A State of Disaster
+.pull-left[
+<div id="htmlwidget-2a257209bbdb8ba0c695" style="width:90%;height:432px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2a257209bbdb8ba0c695">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["CartoDB.DarkMatter",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircles","args":[[-37.800793,-37.800524,-37.8023,-37.800575,-37.800629],[144.966492,144.964122,144.960923,144.964635,144.965052],[7.35833333333333,8.44166666666667,7.83333333333333,7.78333333333333,6.5375],null,null,{"interactive":true,"className":"","stroke":true,"color":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"fillOpacity":0.2},["Between 87 and 89 Grattan Street, Carlton","Corner of Swanston and Grattan Streets, Carlton","Corner of Pelham and Leicester Streets, Carlton","141 Grattan Street, Carlton","3/121 Grattan Street, Carlton"],null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null,null]},{"method":"addLegend","args":[{"colors":["#5DD0B9"],"labels":["Good"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"factor","title":"Air Quality","extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[-37.8023,-37.800524],"lng":[144.960923,144.966492]}},"evals":[],"jsHooks":[]}</script>
+]
+
+.pull-right[
+&lt;img src="airquality_slide_xaringan_files/figure-html/time4-1.png" width="360" /&gt;
+]
+
+---
+class: center
+# Comparing Between Years
+.pull-left[
+#### November 2019
+
+&lt;br&gt;
+
+<div id="htmlwidget-e520c4ea89cd46772e80" style="width:90%;height:432px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-e520c4ea89cd46772e80">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["CartoDB.DarkMatter",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircles","args":[[-37.800793,-37.800524,-37.8023,-37.800575,-37.800629],[144.966492,144.964122,144.960923,144.964635,144.965052],[7.62,7.3448,6.8168,7.6112,6.01013333333333],null,null,{"interactive":true,"className":"","stroke":true,"color":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"fillOpacity":0.2},["Between 87 and 89 Grattan Street, Carlton","Corner of Swanston and Grattan Streets, Carlton","Corner of Pelham and Leicester Streets, Carlton","141 Grattan Street, Carlton","3/121 Grattan Street, Carlton"],null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null,null]},{"method":"addLegend","args":[{"colors":["#5DD0B9"],"labels":["Good"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"factor","title":"Air Quality","extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[-37.8023,-37.800524],"lng":[144.960923,144.966492]}},"evals":[],"jsHooks":[]}</script>
+]
+
+.pull-right[
+#### October 2020
+
+&lt;br&gt;
+
+<div id="htmlwidget-d89a224531f063a46c2e" style="width:90%;height:432px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-d89a224531f063a46c2e">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["CartoDB.DarkMatter",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircles","args":[[-37.800793,-37.800524,-37.8023,-37.800575,-37.800629],[144.966492,144.964122,144.960923,144.964635,144.965052],[7.22040816326531,7.39387755102041,7.23168724279835,7.72120582120582,6.67950819672131],null,null,{"interactive":true,"className":"","stroke":true,"color":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9","#5DD0B9"],"fillOpacity":0.2},["Between 87 and 89 Grattan Street, Carlton","Corner of Swanston and Grattan Streets, Carlton","Corner of Pelham and Leicester Streets, Carlton","141 Grattan Street, Carlton","3/121 Grattan Street, Carlton"],null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null,null]},{"method":"addLegend","args":[{"colors":["#5DD0B9"],"labels":["Good"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"factor","title":"Air Quality","extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[-37.8023,-37.800524],"lng":[144.960923,144.966492]}},"evals":[],"jsHooks":[]}</script>
+]
+
+---
+class: inverse, center
+# Conclusion &amp; Key Findings  
+
+&lt;br&gt;
+
+### 1: In general, Melbourne's air quality is quite good
+### 2: There does appear to be an increased number of days with poor air quality pre-lockdown
+### 3: However, when aggregated there appears to be little difference in air quality either side of the lockdown
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

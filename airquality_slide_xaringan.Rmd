@@ -135,6 +135,7 @@ class: center, middle
 
 # Air Quality in Melbourne
 
+## Team Nu
 ### Lachlan Moody & Putu Saputra
 
 ---

@@ -13,117 +13,180 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 library(leaflet)
+library(plotly)
+library(ggridges)
+library(ggExtra)
 ```
 
-```{r, warning=FALSE, message=FALSE}
+```{r read-data, warning=FALSE, message=FALSE}
 sensor_location <- read_csv("Microclimate_Sensor_Locations.csv")
 sensor_readings <- read_csv("Microclimate_Sensor_Readings.csv")
 ```
 
-```{r}
+```{r wrangling}
 sensor_readings <- sensor_readings %>% 
   mutate(local_time = ymd_hms(local_time))
 sensor_location <- sensor_location %>% 
   mutate(last_data = ymd_hms(last_data))
-min(sensor_readings$local_time)
-```
 
-
-
-```{r}
 sensor_melb <- sensor_readings %>% 
   left_join(sensor_location, by=c("site_id"="site_id"))
 
 air_quality <- sensor_melb %>%
-  filter(sensor_id %in% c("0a.EPA-1h","0b.EPA-1h")) %>%
-  mutate(condition= case_when(type=="PM10-EPA-1h" & value < 40 ~ "Good",
-                              type=="PM10-EPA-1h" & between(value, 40,80) ~ "Moderate",
-                              type=="PM10-EPA-1h" & between(value, 80,120) ~ "Poor",
-                              type=="PM10-EPA-1h" & between(value, 120,240) ~ "Very Poor",
-                              type=="PM10-EPA-1h" & value >= 120 ~ "Hazardous",
-                              type=="PM2.5-EPA-1h" & value< 27 ~ "Good",
-                              type=="PM2.5-EPA-1h" & between(value, 27,62) ~ "Moderate",
-                              type=="PM2.5-EPA-1h" & between(value, 62,97) ~ "Poor",
-                              type=="PM2.5-EPA-1h" & between(value, 97,370) ~ "Very Poor",
-                              type=="PM2.5-EPA-1h" & value >= 370 ~ "Hazardous"),
+  filter(sensor_id %in% c("0a.EPA-1h","0b.EPA-1h","0a.EPA-24h","0b.EPA-24h")) %>%
+  mutate(condition= case_when(type %in% c("PM10-EPA-1h","PM10-EPA-24h","PM10") & value < 40 ~ "Good",
+                              type %in% c("PM10-EPA-1h","PM10-EPA-24h","PM10") & between(value, 40,80) ~ "Moderate",
+                              type %in% c("PM10-EPA-1h","PM10-EPA-24h","PM10") & between(value, 80,120) ~ "Poor",
+                              type %in% c("PM10-EPA-1h","PM10-EPA-24h","PM10") & between(value, 120,240) ~ "Very Poor",
+                              type %in% c("PM10-EPA-1h","PM10-EPA-24h","PM10") & value >= 120 ~ "Hazardous",
+                              type %in% c("PM2.5-EPA-1h","PM2.5-EPA-24h","PM2.5") & value< 27 ~ "Good",
+                              type %in% c("PM2.5-EPA-1h","PM2.5-EPA-24h","PM2.5") & between(value, 27,62) ~ "Moderate",
+                              type %in% c("PM2.5-EPA-1h","PM2.5-EPA-24h","PM2.5") & between(value, 62,97) ~ "Poor",
+                              type %in% c("PM2.5-EPA-1h","PM2.5-EPA-24h","PM2.5") & between(value, 97,370) ~ "Very Poor",
+                              type %in% c("PM2.5-EPA-1h","PM2.5-EPA-24h","PM2.5") & value >= 370 ~ "Hazardous"),
          date = as_date(local_time),
          day = mday(local_time),
          time = hour(local_time),
-         month = month(local_time))
+         month = month(local_time,label = TRUE),
+         year = year(local_time))
+
+
+MyPalette <- c("#64A13C", "#EAC51C"  , "#D67900", "#A90737","#50051E")
+names(MyPalette) <- unique(air_quality$condition)
 ```
 
 ```{r function-plot}
-MyPalette <- c("#5DD0B9","#E1E7E9", "#1f78b4", "#a6cee3", "#f86cc5")
-names(MyPalette) <- levels(unique(air_quality$condition))
+# MyPalette <- c("#5DD0B9","#E1E7E9", "#1f78b4", "#a6cee3", "#f86cc5")
+
+library(scales)
+
 
 plot_air_post_lockdown <- function(df, type_epa, date_measure){
     df %>%
     filter(type == type_epa,
            local_time > date_measure) %>%
-    ggplot(aes(x=time, y=value, color=condition, group=date))+
-    geom_line()+
+    ggplot(aes(x=time, y=value, color=factor(condition, levels = c("Good","Moderate","Poor", "Very Poor", "Hazardous")), group=date))+
+    geom_point()+
     # geom_col(position="dodge", width = 0.5) +
-    facet_grid(description ~ .,
-    labeller = labeller(description = label_wrap_gen(10))) +
-    labs(x = "Date Time")+
+    facet_wrap(description ~ ., ncol=2,
+    labeller = labeller(description = label_wrap_gen(40))) +
+    theme_bw() +
+    labs(x = "Date Time",
+         color = "Air Condition")+
     theme(legend.position = "bottom")+
-    scale_fill_manual(values = MyPalette) +
-  scale_color_brewer(palette = "Dark2")+
-    theme_bw()
+    scale_color_manual(values = MyPalette)+
+    ggtitle(paste("Air Quality Hourly based on", type_epa, "After Lockdown"))
+  # scale_color_brewer(palette = "viridis")+
 }
 
 plot_air_pre_lockdown <- function(df, type_epa, date_measure){
     df %>%
     filter(type == type_epa,
            local_time < date_measure) %>%
-    ggplot(aes(x=time, y=value, color=condition, group=date))+
-    geom_line()+
+    ggplot(aes(x=time, y=value, color=factor(condition, levels = c("Good","Moderate","Poor", "Very Poor", "Hazardous")), group=date))+
+    geom_point()+
     # geom_col(position="dodge", width = 0.5) +
-    facet_grid(description ~ .,
-    labeller = labeller(description = label_wrap_gen(10))) +
-    labs(x = "Date Time")+
+    facet_wrap(description ~ ., ncol=2,
+    labeller = labeller(description = label_wrap_gen(40))) +
+    theme_bw() +
+    labs(x = "Date Time",
+         color = "Air Condition")+
     theme(legend.position = "bottom")+
-    scale_fill_manual(values = MyPalette) +
-  scale_color_brewer(palette = "Dark2")+
-    theme_bw()
+    scale_color_manual(values = MyPalette) +
+        ggtitle(paste("Air Quality Hourly based on", type_epa, "Before Lockdown"))
+  # scale_color_brewer(palette = "viridis")+
 }
 ```
 
-```{r}
+```{r density-all-type}
+  air_quality %>%
+# filter(  type=="PM2.5-EPA-1h") %>%
+  mutate(lockdown= case_when(date < "2020-03-28" ~ "Before Lockdown",
+                             date >= "2020-03-28" ~ "After Lockdown")) %>%
+  ggplot(aes(x = value,
+             y = type)) +
+  geom_density_ridges(fill = "darkcyan",
+                      alpha = 0.2) + 
+  xlim(20, 250) +
+  xlab("Value") +
+  ylab("Categories of air pollution") +
+  ggtitle("The Distribution of air pollution",
+          subtitle = "The distributions are negatively skewed") +
+  facet_wrap(~lockdown, ncol=1)+
+  theme_bw()
+```
+
+
+```{r plot-hourly}
 plot_air_post_lockdown(air_quality, type_epa = "PM2.5-EPA-1h", date_measure = "2020-03-28 00:00:00")
 plot_air_post_lockdown(air_quality, type_epa = "PM10-EPA-1h", date_measure = "2020-03-28 00:00:00")
 plot_air_pre_lockdown(air_quality, type_epa = "PM2.5-EPA-1h", date_measure = "2020-03-28 00:00:00")
 plot_air_pre_lockdown(air_quality, type_epa = "PM10-EPA-1h", date_measure = "2020-03-28 00:00:00")
 ```
-
-
-```{r air-per-sensor-post-lockdown-2.5}
-  air_quality %>%
-    filter(type == "PM2.5-EPA-1h",
-           local_time > "2020-03-28 00:00:00") %>%
-    ggplot(aes(x=time, y=value, color=condition, group=date))+
-    geom_line()+
-    # geom_col(position="dodge", width = 0.5) +
-    facet_grid(description ~ .,
-    labeller = labeller(description = label_wrap_gen(10))) +
-    labs(x = "Date Time")+
-    theme(legend.position = "bottom")+
-    scale_color_brewer(palette = "Dark2")+
-    theme_bw()
+ 
+```{r plot-daily}
+air_quality %>%
+  filter(type == "PM2.5-EPA-1h",
+         year== 2020,
+         site_id == "arc1046") %>%
+  ggplot(aes(x = day, y = time, fill = condition)) +
+  geom_tile(color = "white", size = 0.1) +
+  scale_fill_manual(values = MyPalette)+
+  # scale_fill_viridis(name = "Hourly Air Condition", option = "C") +
+  facet_grid(~ month) +
+  scale_y_continuous(trans = "reverse", breaks = unique(air_quality$time)) +
+  scale_x_continuous(breaks = c(1, 10, 20, 31)) +
+  theme_minimal(base_size = 7) +
+  labs(
+    title = paste("Hourly Air Condition - Sensor", site_id),
+    x = "Day",
+    y = "Hour Commencing"
+  ) +
+  theme(
+    legend.position = "bottom",
+    # plot.title = element_text(size = 14),
+    axis.text.y = element_text(size = 6),
+    strip.background = element_rect(colour = "white"),
+    plot.title = element_text(hjust = 0),
+    axis.ticks = element_blank(),
+    axis.text = element_text(size = 7),
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 6)
+  ) +
+  removeGrid()
 ```
 
-```{r air-per-sensor-pre-lockdown-2.5}
-  air_quality %>%
-    filter(type == "PM2.5-EPA-1h",
-           local_time < "2020-03-28 00:00:00") %>%
-    ggplot(aes(x=time, y=value, color=condition, group=date))+
-    geom_line()+
-    # geom_col(position="dodge", width = 0.5) +
-    facet_grid(description ~ .,
-    labeller = labeller(description = label_wrap_gen(10))) +
-    labs(x = "Date Time")+
-    theme(legend.position = "bottom")+
-    scale_color_brewer(palette = "Dark2")+
-    theme_bw()
+
+```{r}
+air_quality %>%
+  filter(type == "PM2.5-EPA-24h",
+         year== 2020) %>%
+  ggplot(aes(x = month, y = day, fill = condition)) +
+  geom_tile(color = "white", size = 0.1) +
+  scale_fill_manual(values = MyPalette)+
+  # scale_fill_viridis(name = "Hourly Air Condition", option = "C") +
+  # facet_grid(~ month) +
+  # scale_x_continuous(trans = "reverse", breaks = unique(air_quality$time)) +
+  scale_y_continuous(breaks = c(1, 10, 20, 31)) +
+  theme_minimal(base_size = 7) +
+  labs(
+    title = "Hourly Air Condition PM2.5-EPA-24h",
+    y = "Day",
+    x="Month"
+  ) +
+  theme(
+    legend.position = "bottom",
+    # plot.title = element_text(size = 14),
+    axis.text.y = element_text(size = 6),
+    strip.background = element_rect(colour = "white"),
+    plot.title = element_text(hjust = 0),
+    axis.ticks = element_blank(),
+    axis.text = element_text(size = 7),
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 6)
+  ) +
+  removeGrid()+
+  facet_wrap(~description)
 ```
+
 
