@@ -243,6 +243,13 @@ p4|p2 + plot_layout(guides="collect")
 ]
 
 ---
+# News Article (14 Jan 2020)
+
+![](pics.png)
+
+source : https://www.abc.net.au/news/2020-01-14/melbourne-air-quality-drops-to-hazardous-from-bushfire-smoke/11865178
+
+---
 
 # Air Quality Daily in 2020
 .pull-left[
@@ -281,7 +288,7 @@ air_quality %>%
 
 .pull-right[
 .item[
-* January has a lot of days with bad air quality
+* January has some days with bad air quality (bushfire effect)
 * February - October Melbourne mostly have good quality of air (restriction start at March 28th)
 ]
 ]
